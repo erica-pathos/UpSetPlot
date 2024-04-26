@@ -380,6 +380,7 @@ class UpSet:
         linewidth=None,
         linestyle=None,
         label=None,
+        
     ):
         """Updates the style of selected subsets' bars and matrix dots
 
@@ -437,6 +438,7 @@ class UpSet:
             "hatch": hatch,
             "linewidth": linewidth,
             "linestyle": linestyle,
+            
         }
         style = {k: v for k, v in style.items() if v is not None}
         mask = _get_subset_mask(
@@ -486,16 +488,29 @@ class UpSet:
             rects = ax.bar(
                 x,
                 y,
-                0.5,
+                0.9,
                 cum_y,
                 color=color,
                 zorder=10,
                 label=name if use_labels else None,
-                align="center",
+                align="center", alpha=0.3
             )
             cum_y = y if cum_y is None else cum_y + y
             all_rects.extend(rects)
 
+            ############# Start of Snippet
+            # Iterate over each bar 
+            for bar_num in  range(len(y.tolist())):
+                bar = ax.patches[bar_num] # extract the bar 
+                for counter in range(y.tolist()[bar_num]):
+                    # insert text according to 
+                    ax.text( bar.get_width()/2 + bar.get_x(), bar.get_y() + bar.get_height() * \
+                             counter/y.tolist()[bar_num] , self.lol_of_intersection_names[bar_num][counter], \
+                             color='black', ha='center', va='bottom', rotation=0, fontsize=5)
+                    counter += 1
+            ############# End of Snippet    
+
+        
         self._label_sizes(ax, rects, "top" if self._horizontal else "right")
 
         ax.xaxis.set_visible(False)
@@ -714,6 +729,7 @@ class UpSet:
             fig.set_figheight((colw * (n_cats + sizes.sum())) / render_ratio)
 
         text_nelems = int(np.ceil(figw / colw - non_text_nelems))
+        text_nelems-=1
 
         GS = self._reorient(matplotlib.gridspec.GridSpec)
         gridspec = GS(
@@ -789,6 +805,7 @@ class UpSet:
                     "linewidth": float,
                     "linestyle": "O",
                     "hatch": "O",
+
                 }
             )
         )
@@ -806,7 +823,7 @@ class UpSet:
             s = (self._element_size * 0.35) ** 2
         else:
             # TODO: make s relative to colw
-            s = 200
+            s = 15
         ax.scatter(
             *self._swapaxes(x, y),
             s=s,
@@ -834,7 +851,7 @@ class UpSet:
                 line_data.index.values,
                 line_data["min"],
                 line_data["max"],
-                lw=2,
+                lw=1,
                 colors=line_data["color"],
                 zorder=5,
             )
@@ -858,6 +875,7 @@ class UpSet:
         rects = self._plot_bars(
             ax, self.intersections, title="Intersection size", colors=self._facecolor
         )
+        ax.tick_params(labelsize=8)
         for style, rect in zip(self.subset_styles, rects):
             style = style.copy()
             style.setdefault("edgecolor", style.get("facecolor", self._facecolor))
@@ -920,7 +938,7 @@ class UpSet:
                     rect.get_y() + rect.get_height() * 0.5,
                     fmt.format(*make_args(width)),
                     ha="right",
-                    va="center",
+                    va="center",fontsize=7
                 )
         elif where == "top":
             margin = 0.01 * abs(np.diff(ax.get_ylim()))
@@ -931,7 +949,7 @@ class UpSet:
                     height + margin,
                     fmt.format(*make_args(height)),
                     ha="center",
-                    va="bottom",
+                    va="bottom",fontsize=7
                 )
         else:
             raise NotImplementedError("unhandled where: %r" % where)
@@ -945,8 +963,9 @@ class UpSet:
             self.totals,
             0.5,
             color=self._facecolor,
-            align="center",
+            align="center"
         )
+        ax.tick_params(labelsize=8)
         self._label_sizes(ax, rects, "left" if self._horizontal else "top")
 
         for category, rect in zip(self.totals.index.values, rects):
